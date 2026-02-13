@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   description:
     "The meme-sharing platform for the culture. Post jokes, share laughs, vibe with the community.",
   manifest: "/manifest.webmanifest",
-  themeColor: "#0B0B0F",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -38,6 +37,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#0B0B0F",
 };
 
 export default function RootLayout({

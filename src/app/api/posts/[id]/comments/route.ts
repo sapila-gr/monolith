@@ -3,18 +3,37 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+const authorSelect = { id: true, name: true, image: true } as const;
+
+// Recursively include replies up to a reasonable depth
+function buildReplyInclude(depth: number): Record<string, unknown> {
+  if (depth <= 0) {
+    return {
+      author: { select: authorSelect },
+      _count: { select: { replies: true } },
+    };
+  }
+  return {
+    author: { select: authorSelect },
+    _count: { select: { replies: true } },
+    replies: {
+      orderBy: { createdAt: "asc" },
+      include: buildReplyInclude(depth - 1),
+    },
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: postId } = await params;
 
+  // Fetch only top-level comments (no parent), with nested replies 4 levels deep
   const comments = await prisma.comment.findMany({
-    where: { postId },
+    where: { postId, parentId: null },
     orderBy: { createdAt: "asc" },
-    include: {
-      author: { select: { id: true, name: true, image: true } },
-    },
+    include: buildReplyInclude(4),
   });
 
   return NextResponse.json(comments);
@@ -32,10 +51,20 @@ export async function POST(
 
   const { id: postId } = await params;
   const body = await request.json();
-  const { content } = body;
+  const { content, parentId } = body;
 
   if (!content?.trim()) {
     return NextResponse.json({ error: "Content is required" }, { status: 400 });
+  }
+
+  // Validate parentId if provided
+  if (parentId) {
+    const parent = await prisma.comment.findUnique({
+      where: { id: parentId },
+    });
+    if (!parent || parent.postId !== postId) {
+      return NextResponse.json({ error: "Invalid parent comment" }, { status: 400 });
+    }
   }
 
   const comment = await prisma.comment.create({
@@ -43,9 +72,17 @@ export async function POST(
       content: content.trim(),
       postId,
       authorId: session.user.id,
+      parentId: parentId ?? null,
     },
     include: {
-      author: { select: { id: true, name: true, image: true } },
+      author: { select: authorSelect },
+      _count: { select: { replies: true } },
+      replies: {
+        include: {
+          author: { select: authorSelect },
+          _count: { select: { replies: true } },
+        },
+      },
     },
   });
 

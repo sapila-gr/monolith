@@ -7,7 +7,10 @@ interface Comment {
   id: string;
   content: string;
   createdAt: string;
+  parentId: string | null;
   author: { id: string; name: string | null; image: string | null };
+  replies: Comment[];
+  _count: { replies: number };
 }
 
 interface CommentSectionProps {
@@ -15,6 +18,209 @@ interface CommentSectionProps {
   commentCount: number;
   isAuthenticated: boolean;
 }
+
+function timeAgo(dateStr: string) {
+  const seconds = Math.floor(
+    (Date.now() - new Date(dateStr).getTime()) / 1000
+  );
+  if (seconds < 60) return "just now";
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  return `${Math.floor(seconds / 86400)}d`;
+}
+
+/* ─────────────── Reply Form ─────────────── */
+
+function ReplyForm({
+  postId,
+  parentId,
+  onReply,
+  onCancel,
+}: {
+  postId: string;
+  parentId: string;
+  onReply: (comment: Comment) => void;
+  onCancel: () => void;
+}) {
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!text.trim() || submitting) return;
+    setSubmitting(true);
+
+    try {
+      const res = await fetch(`/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: text.trim(), parentId }),
+      });
+      if (res.ok) {
+        const comment = await res.json();
+        onReply(comment);
+        setText("");
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="flex gap-2 mt-2">
+      <input
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Reply..."
+        autoFocus
+        className="flex-1 bg-surface-hover border border-border rounded-lg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-indigo transition-colors"
+      />
+      <button
+        type="submit"
+        disabled={!text.trim() || submitting}
+        className="px-2.5 py-1.5 rounded-lg bg-indigo text-white text-xs font-semibold disabled:opacity-40 hover:bg-indigo-dim transition-colors"
+      >
+        {submitting ? "..." : "Reply"}
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        className="px-2 py-1.5 rounded-lg text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+      >
+        Cancel
+      </button>
+    </form>
+  );
+}
+
+/* ─────────────── Single Comment (recursive) ─────────────── */
+
+function CommentNode({
+  comment,
+  postId,
+  depth,
+  isAuthenticated,
+  onReplyAdded,
+}: {
+  comment: Comment;
+  postId: string;
+  depth: number;
+  isAuthenticated: boolean;
+  onReplyAdded: () => void;
+}) {
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replies, setReplies] = useState<Comment[]>(comment.replies ?? []);
+  const [collapsed, setCollapsed] = useState(false);
+
+  const maxDepth = 4;
+  const isDeep = depth >= maxDepth;
+
+  const handleReply = (newComment: Comment) => {
+    setReplies((prev) => [...prev, newComment]);
+    setShowReplyForm(false);
+    onReplyAdded();
+  };
+
+  return (
+    <div className={depth > 0 ? "mt-2" : ""}>
+      <div className="flex gap-2 group">
+        {/* Thread line + avatar */}
+        <div className="flex flex-col items-center">
+          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-surface-raised">
+            {comment.author.image ? (
+              <Image
+                src={comment.author.image}
+                alt=""
+                width={24}
+                height={24}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-text-tertiary">
+                {comment.author.name?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
+          </div>
+          {/* Thread line */}
+          {replies.length > 0 && !collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="w-0.5 flex-1 min-h-[12px] mt-1 bg-border hover:bg-indigo/50 transition-colors cursor-pointer rounded-full"
+              title="Collapse thread"
+            />
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          {/* Header */}
+          <div className="flex items-baseline gap-2">
+            <span className="text-xs font-semibold text-text-primary">
+              {comment.author.name ?? "Anon"}
+            </span>
+            <span className="text-[10px] text-text-tertiary">
+              {timeAgo(comment.createdAt)}
+            </span>
+          </div>
+
+          {/* Content */}
+          <p className="text-sm text-text-secondary leading-relaxed">
+            {comment.content}
+          </p>
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 mt-1">
+            {isAuthenticated && !isDeep && (
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="text-[11px] font-medium text-text-tertiary hover:text-indigo transition-colors"
+              >
+                Reply
+              </button>
+            )}
+            {collapsed && (
+              <button
+                onClick={() => setCollapsed(false)}
+                className="text-[11px] font-medium text-indigo/70 hover:text-indigo transition-colors"
+              >
+                Show {replies.length} {replies.length === 1 ? "reply" : "replies"}
+              </button>
+            )}
+          </div>
+
+          {/* Reply form */}
+          {showReplyForm && (
+            <ReplyForm
+              postId={postId}
+              parentId={comment.id}
+              onReply={handleReply}
+              onCancel={() => setShowReplyForm(false)}
+            />
+          )}
+
+          {/* Nested replies */}
+          {!collapsed && replies.length > 0 && (
+            <div className="mt-1 pl-1 border-l border-border/50">
+              {replies.map((reply) => (
+                <CommentNode
+                  key={reply.id}
+                  comment={reply}
+                  postId={postId}
+                  depth={depth + 1}
+                  isAuthenticated={isAuthenticated}
+                  onReplyAdded={onReplyAdded}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── Comment Section (entry point) ─────────────── */
 
 export function CommentSection({
   postId,
@@ -70,16 +276,6 @@ export function CommentSection({
     }
   };
 
-  const timeAgo = (dateStr: string) => {
-    const seconds = Math.floor(
-      (Date.now() - new Date(dateStr).getTime()) / 1000
-    );
-    if (seconds < 60) return "just now";
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
-    return `${Math.floor(seconds / 86400)}d`;
-  };
-
   return (
     <div>
       <button
@@ -105,7 +301,7 @@ export function CommentSection({
 
       {open && (
         <div className="mt-3 animate-fade-in">
-          <div className="border-t border-border pt-3 space-y-3">
+          <div className="border-t border-border pt-3 space-y-1">
             {loading ? (
               <div className="space-y-2">
                 {[1, 2].map((i) => (
@@ -123,44 +319,22 @@ export function CommentSection({
                 No comments yet. Be the first!
               </p>
             ) : (
-              <div className="space-y-2.5 max-h-64 overflow-y-auto">
+              <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-2 group">
-                    <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-surface-raised">
-                      {comment.author.image ? (
-                        <Image
-                          src={comment.author.image}
-                          alt=""
-                          width={24}
-                          height={24}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-text-tertiary">
-                          {comment.author.name?.[0]?.toUpperCase() ?? "?"}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-xs font-semibold text-text-primary">
-                          {comment.author.name ?? "Anon"}
-                        </span>
-                        <span className="text-[10px] text-text-tertiary">
-                          {timeAgo(comment.createdAt)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-text-secondary leading-relaxed">
-                        {comment.content}
-                      </p>
-                    </div>
-                  </div>
+                  <CommentNode
+                    key={comment.id}
+                    comment={comment}
+                    postId={postId}
+                    depth={0}
+                    isAuthenticated={isAuthenticated}
+                    onReplyAdded={() => setCount((c) => c + 1)}
+                  />
                 ))}
               </div>
             )}
 
             {isAuthenticated && (
-              <form onSubmit={handleSubmit} className="flex gap-2 pt-1">
+              <form onSubmit={handleSubmit} className="flex gap-2 pt-2">
                 <input
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
