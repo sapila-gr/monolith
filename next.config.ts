@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { hostname: "avatars.githubusercontent.com" },
+      { hostname: "*.supabase.co" },
     ],
   },
 };

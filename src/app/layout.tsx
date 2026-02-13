@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Syne, Manrope } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import { Providers } from "./providers";
@@ -25,6 +25,19 @@ export const metadata: Metadata = {
   title: "Sapila — Where Memes Hit Different",
   description:
     "The meme-sharing platform for the culture. Post jokes, share laughs, vibe with the community.",
+  manifest: "/manifest.webmanifest",
+  themeColor: "#0B0B0F",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Sapila",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

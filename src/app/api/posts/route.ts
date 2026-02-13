@@ -23,16 +23,21 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { caption, textContent, type } = body;
+  const { caption, textContent, contentUrl, type } = body;
 
   if (!type || (type === "text" && !textContent)) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  if (type === "image" && !contentUrl) {
+    return NextResponse.json({ error: "Image URL is required for image posts" }, { status: 400 });
   }
 
   const post = await prisma.post.create({
     data: {
       caption,
       textContent,
+      contentUrl,
       type,
       authorId: session.user.id,
     },

@@ -12,6 +12,7 @@ interface Post {
   caption: string | null;
   type: string;
   textContent: string | null;
+  contentUrl: string | null;
   createdAt: string;
   author: { id: string; name: string | null; image: string | null };
   _count: { comments: number; likes: number };

@@ -9,6 +9,7 @@ interface Post {
   caption: string | null;
   type: string;
   textContent: string | null;
+  contentUrl: string | null;
   createdAt: string;
   author: { id: string; name: string | null; image: string | null };
   _count: { comments: number; likes: number };
@@ -69,6 +70,18 @@ export function PostCard({ post, isAuthenticated }: PostCardProps) {
           <h2 className="font-display font-bold text-lg text-text-primary mb-2 leading-snug">
             {post.caption}
           </h2>
+        )}
+        {post.type === "image" && post.contentUrl && (
+          <div className="relative w-full rounded-xl overflow-hidden border border-border/50">
+            <Image
+              src={post.contentUrl}
+              alt={post.caption ?? "Post image"}
+              width={600}
+              height={400}
+              className="w-full h-auto object-contain"
+              sizes="(max-width: 640px) 100vw, 600px"
+            />
+          </div>
         )}
         {post.textContent && (
           <div className="bg-background/50 rounded-xl px-4 py-3 border border-border/50">
