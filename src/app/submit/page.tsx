@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useState, useRef } from "react";
 import Link from "next/link";
@@ -12,7 +12,7 @@ const CHAR_LIMIT = 500;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export default function SubmitPage() {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = useSession();
   const router = useRouter();
   const [postType, setPostType] = useState<"text" | "image">("text");
   const [caption, setCaption] = useState("");
@@ -24,7 +24,7 @@ export default function SubmitPage() {
   const [error, setError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (status === "loading") {
+  if (isPending) {
     return (
       <div className="min-h-screen bg-background">
         <NavBar />
@@ -35,7 +35,7 @@ export default function SubmitPage() {
     );
   }
 
-  if (status === "unauthenticated") {
+  if (!session?.user) {
     router.push("/");
     return null;
   }

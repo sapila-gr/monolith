@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { NavBar } from "@/components/NavBar";
 import { PostCard } from "@/components/PostCard";
@@ -19,7 +19,7 @@ interface Post {
 }
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +31,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  const isAuthenticated = status === "authenticated";
+  const isAuthenticated = !!session?.user;
 
   return (
     <div className="min-h-screen bg-background">
