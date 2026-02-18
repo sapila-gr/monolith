@@ -9,6 +9,15 @@ export const auth = betterAuth({
     provider: "postgresql",
   }),
 
+  user: {
+    additionalFields: {
+      username: {
+        type: "string",
+        required: false,
+      },
+    },
+  },
+
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -32,7 +41,7 @@ export const auth = betterAuth({
           userInfoUrl: "https://graph.instagram.com/me?fields=id,username",
           scopes: ["user_profile", "user_media"],
           mapProfileToUser: (profile: Record<string, unknown>) => ({
-            name: profile.username,
+            name: (profile.username as string) || "User",
             email: `${profile.id}@instagram.local`,
             image: null,
           }),

@@ -8,6 +8,8 @@ Sapila is a meme-sharing platform built as a Next.js monolith with Supabase (Pos
 
 **Target Audience:** Gen Z users aged 18–24. The tone is irreverent, playful, and internet-native. Copy should feel like talking to a friend, not a corporate product. Think Discord/TikTok energy, not LinkedIn.
 
+**Language:** All UI copy, microcopy, and user-facing strings must be in Greek (Ελληνικά).
+
 ## Commands
 
 ```bash
@@ -28,14 +30,15 @@ No test framework is configured yet.
 
 ## Architecture
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Prisma 7 · Supabase · NextAuth 4 · Tailwind CSS 4
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Prisma 7 · Supabase · Better Auth · Tailwind CSS 4
 
 **App Router structure (`src/app/`):**
-- `api/auth/[...nextauth]/route.ts` — NextAuth route handler (GitHub OAuth, JWT sessions, PrismaAdapter)
+- `api/auth/[...all]/route.ts` — Better Auth route handler (GitHub, Google, Instagram OAuth)
 - `api/posts/route.ts` — GET (feed) and POST (create) posts
 - `api/posts/[id]/like/route.ts` — POST toggle like
 - `api/posts/[id]/comments/route.ts` — GET and POST comments
-- `providers.tsx` — Client-side SessionProvider wrapper
+- `api/users/[id]/username/route.ts` — POST to set username (nickname)
+- `providers.tsx` — Minimal wrapper (no SessionProvider needed)
 - `layout.tsx` — Root layout (Syne + Manrope fonts)
 - `page.tsx` — Home page with post feed
 - `submit/page.tsx` — Text joke submission form (requires auth)
@@ -47,17 +50,20 @@ No test framework is configured yet.
 - `CommentSection.tsx` — Expandable inline comments with reply form
 - `LoadingSkeleton.tsx` — Shimmer skeleton cards for loading states
 - `EmptyState.tsx` — Fun empty state with CTA
+- `SetNicknameModal.tsx` — Modal for first-time username setup (unique usernames)
 
 **Data layer (`prisma/schema.prisma`):**
 - Content models: Post, Comment, Like
-- Auth models: User, Account, Session, VerificationToken (NextAuth)
+- Auth models: User, Account, Session, Verification (Better Auth)
+- User model includes `username` field (unique, set on first login)
 - Posts have a `type` field (image/text) and relate to User, Comment, Like
 
 **Lib (`src/lib/`):**
-- `supabase.ts` — Supabase client initialization
+- `auth.ts` — Better Auth server config (OAuth providers)
+- `auth-client.ts` — Better Auth client (useSession, signIn, signOut)
 - `prisma.ts` — Prisma client singleton
 
-**Auth flow:** GitHub OAuth → NextAuth with PrismaAdapter → JWT session strategy. User ID is injected into the JWT via session callbacks.
+**Auth flow:** OAuth (GitHub/Google/Instagram) → Better Auth → Database sessions. On first login, user must set a unique username via modal before accessing the site.
 
 ## Design System
 
@@ -96,9 +102,13 @@ No test framework is configured yet.
 
 Required in `.env`:
 - `DATABASE_URL` — PostgreSQL connection string (Supabase)
-- `NEXTAUTH_SECRET` — JWT signing secret
-- `GITHUB_ID` / `GITHUB_SECRET` — GitHub OAuth credentials
+- `BETTER_AUTH_SECRET` — Secret for signing session tokens
+- `BETTER_AUTH_URL` — App base URL (http://localhost:3000 for dev)
+- `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` — GitHub OAuth
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` — Google OAuth
+- `INSTAGRAM_APP_ID` / `INSTAGRAM_APP_SECRET` — Instagram/Meta OAuth
 
 Required in `.env.local`:
-- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase anon key
+- `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL (unused in auth, for future features)
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase anon key (unused in auth, for future features)
+- `NEXT_PUBLIC_APP_URL` — Public-facing app URL (same as BETTER_AUTH_URL)

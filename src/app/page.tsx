@@ -6,6 +6,7 @@ import { NavBar } from "@/components/NavBar";
 import { PostCard } from "@/components/PostCard";
 import { FeedSkeleton } from "@/components/LoadingSkeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { SetNicknameModal } from "@/components/SetNicknameModal";
 
 interface Post {
   id: string;
@@ -22,6 +23,7 @@ export default function Home() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showNicknameModal, setShowNicknameModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/posts")
@@ -31,10 +33,25 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Show nickname modal if user is logged in but doesn't have a username
+  useEffect(() => {
+    if (session?.user && !(session.user as any).username) {
+      setShowNicknameModal(true);
+    }
+  }, [session?.user]);
+
+  const handleNicknameComplete = () => {
+    setShowNicknameModal(false);
+  };
+
   const isAuthenticated = !!session?.user;
 
   return (
     <div className="min-h-screen bg-background">
+      <SetNicknameModal
+        isOpen={showNicknameModal}
+        onComplete={handleNicknameComplete}
+      />
       <NavBar />
 
       {/* Decorative gradient blob */}
