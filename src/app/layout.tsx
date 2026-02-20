@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   title: "Sapila — Where Memes Hit Different",
   description:
     "The meme-sharing platform for the culture. Post jokes, share laughs, vibe with the community.",
+  icons: {
+    icon: "/favicon.svg",
+  },
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
