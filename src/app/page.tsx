@@ -8,6 +8,10 @@ import { FeedSkeleton } from "@/components/LoadingSkeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { SetNicknameModal } from "@/components/SetNicknameModal";
 
+interface SessionUser {
+  username?: string | null;
+}
+
 interface Post {
   id: string;
   caption: string | null;
@@ -15,7 +19,7 @@ interface Post {
   textContent: string | null;
   contentUrl: string | null;
   createdAt: string;
-  author: { id: string; name: string | null; image: string | null };
+  author: { id: string; username: string | null };
   _count: { comments: number; likes: number };
 }
 
@@ -23,7 +27,6 @@ export default function Home() {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showNicknameModal, setShowNicknameModal] = useState(false);
 
   useEffect(() => {
     fetch("/api/posts")
@@ -33,16 +36,9 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Show nickname modal if user is logged in but doesn't have a username
-  useEffect(() => {
-    if (session?.user && !(session.user as any).username) {
-      setShowNicknameModal(true);
-    }
-  }, [session?.user]);
-
-  const handleNicknameComplete = () => {
-    setShowNicknameModal(false);
-  };
+  // Derive modal visibility from session state
+  const showNicknameModal =
+    !!session?.user && !(session.user as unknown as SessionUser).username;
 
   const isAuthenticated = !!session?.user;
 
@@ -50,7 +46,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <SetNicknameModal
         isOpen={showNicknameModal}
-        onComplete={handleNicknameComplete}
+        onComplete={() => {}} // Modal closes automatically when page reloads after setting username
       />
       <NavBar />
 

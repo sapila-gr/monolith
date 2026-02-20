@@ -49,11 +49,11 @@ export const auth = betterAuth({
                 authorizationUrl: "https://api.instagram.com/oauth/authorize",
                 tokenUrl: "https://api.instagram.com/oauth/access_token",
                 userInfoUrl: "https://graph.instagram.com/me?fields=id,username",
-                scopes: ["user_profile", "user_media"],
+                scopes: ["user_profile"],
                 mapProfileToUser: (profile: Record<string, unknown>) => ({
                   name: (profile.username as string) || "User",
                   email: `${profile.id}@instagram.local`,
-                  image: null,
+                  image: null, // Anonymize: no profile images
                 }),
               },
             ],

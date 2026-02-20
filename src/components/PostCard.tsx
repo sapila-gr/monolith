@@ -11,7 +11,7 @@ interface Post {
   textContent: string | null;
   contentUrl: string | null;
   createdAt: string;
-  author: { id: string; name: string | null; image: string | null };
+  author: { id: string; username: string | null };
   _count: { comments: number; likes: number };
 }
 
@@ -39,24 +39,12 @@ export function PostCard({ post, isAuthenticated }: PostCardProps) {
     <article className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-border-hover hover:shadow-[var(--shadow-card-hover)] transition-all duration-300">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 pt-5 pb-3">
-        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-border group-hover:border-lime/30 transition-colors shrink-0">
-          {post.author.image ? (
-            <Image
-              src={post.author.image}
-              alt=""
-              width={36}
-              height={36}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full bg-surface-raised flex items-center justify-center text-sm font-bold text-text-secondary">
-              {post.author.name?.[0]?.toUpperCase() ?? "?"}
-            </div>
-          )}
+        <div className="w-9 h-9 rounded-full border-2 border-border group-hover:border-lime/30 transition-colors shrink-0 bg-surface-raised flex items-center justify-center text-sm font-bold text-text-secondary">
+          {post.author.username?.[0]?.toUpperCase() ?? "?"}
         </div>
         <div className="flex-1 min-w-0">
           <span className="text-sm font-semibold text-text-primary">
-            {post.author.name ?? "Anonymous"}
+            {post.author.username ?? "Anonymous"}
           </span>
           <span className="text-xs text-text-tertiary ml-2">
             {timeAgo(post.createdAt)}

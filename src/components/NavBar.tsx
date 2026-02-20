@@ -1,9 +1,13 @@
 "use client";
 
 import { useSession, signIn, signOut } from "@/lib/auth-client";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+
+interface SessionUser {
+  username?: string | null;
+  name?: string | null;
+}
 
 export function NavBar() {
   const { data: session, isPending } = useSession();
@@ -55,21 +59,9 @@ export function NavBar() {
               <div className="relative">
                 <button
                   onClick={() => setMenuOpen(!menuOpen)}
-                  className="w-9 h-9 rounded-full border-2 border-border hover:border-lime transition-colors overflow-hidden"
+                  className="w-9 h-9 rounded-full border-2 border-border hover:border-lime transition-colors bg-surface-raised flex items-center justify-center text-text-secondary text-sm font-bold"
                 >
-                  {session.user?.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt=""
-                      width={36}
-                      height={36}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-surface-raised flex items-center justify-center text-text-secondary text-sm font-bold">
-                      {session.user?.name?.[0]?.toUpperCase() ?? "?"}
-                    </div>
-                  )}
+                  {((session.user as unknown as SessionUser)?.username ?? session.user?.name ?? "?")?.[0]?.toUpperCase()}
                 </button>
 
                 {menuOpen && (
@@ -81,7 +73,7 @@ export function NavBar() {
                     <div className="absolute right-0 top-full mt-2 z-50 w-48 rounded-xl bg-surface border border-border shadow-lg animate-fade-in-scale overflow-hidden">
                       <div className="px-3 py-2.5 border-b border-border">
                         <p className="text-sm font-semibold text-text-primary truncate">
-                          {session.user?.name ?? "Anonymous"}
+                          {(session.user as unknown as SessionUser)?.username ?? session.user?.name ?? "Anonymous"}
                         </p>
                         <p className="text-xs text-text-tertiary truncate">
                           {session.user?.email}

@@ -94,6 +94,8 @@ No test framework is configured yet.
 - React Compiler is enabled via Babel plugin (`next.config.ts`)
 - TypeScript strict mode is on
 - ESLint uses flat config (ESLint 9) with `next/core-web-vitals` and `next/typescript`
+- **Never use `any` type — use `unknown` instead** (ESLint rule: `@typescript-eslint/no-explicit-any`). When accessing properties on extended types, use explicit interfaces or `as unknown as SpecificType` casts.
+- **Do not call setState inside useEffect** — this causes cascading renders. Instead, derive state from props or use separate state for side effects. If state needs to be updated based on dependencies, compute derived values directly or use callbacks from child components.
 - Client components must use `"use client"` directive
 - Custom components over shadcn/ui for full design control; shadcn can be added later for utility components (dialogs, toasts)
 - Copy/microcopy should be casual and Gen Z-friendly ("Drop a banger", "Send it", not "Submit Post")

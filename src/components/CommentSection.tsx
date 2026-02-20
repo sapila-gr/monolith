@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 interface Comment {
   id: string;
   content: string;
   createdAt: string;
   parentId: string | null;
-  author: { id: string; name: string | null; image: string | null };
+  author: { id: string; username: string | null };
   replies: Comment[];
   _count: { replies: number };
 }
@@ -128,20 +127,8 @@ function CommentNode({
       <div className="flex gap-2 group">
         {/* Thread line + avatar */}
         <div className="flex flex-col items-center">
-          <div className="w-6 h-6 rounded-full overflow-hidden shrink-0 bg-surface-raised">
-            {comment.author.image ? (
-              <Image
-                src={comment.author.image}
-                alt=""
-                width={24}
-                height={24}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-[10px] font-bold text-text-tertiary">
-                {comment.author.name?.[0]?.toUpperCase() ?? "?"}
-              </div>
-            )}
+          <div className="w-6 h-6 rounded-full shrink-0 bg-surface-raised flex items-center justify-center text-[10px] font-bold text-text-tertiary">
+            {comment.author.username?.[0]?.toUpperCase() ?? "?"}
           </div>
           {/* Thread line */}
           {replies.length > 0 && !collapsed && (
@@ -157,7 +144,7 @@ function CommentNode({
           {/* Header */}
           <div className="flex items-baseline gap-2">
             <span className="text-xs font-semibold text-text-primary">
-              {comment.author.name ?? "Anon"}
+              {comment.author.username ?? "Anon"}
             </span>
             <span className="text-[10px] text-text-tertiary">
               {timeAgo(comment.createdAt)}

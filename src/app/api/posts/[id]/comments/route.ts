@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const authorSelect = { id: true, name: true, image: true } as const;
+const authorSelect = { id: true, username: true } as const;
 
 // Recursively include replies up to a reasonable depth
 function buildReplyInclude(depth: number): Record<string, unknown> {

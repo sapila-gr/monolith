@@ -38,6 +38,8 @@ export function SetNicknameModal({ isOpen, onComplete }: SetNicknameModalProps) 
       }
 
       onComplete(data.username);
+      // Reload to refresh session with new username
+      window.location.reload();
     } catch {
       setError("Network error. Try again?");
     } finally {
