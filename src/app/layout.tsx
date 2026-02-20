@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sapila — Where Memes Hit Different",
+  title: "Sapila - Where memes hit different",
   description:
     "The meme-sharing platform for the culture. Post jokes, share laughs, vibe with the community.",
   icons: {
