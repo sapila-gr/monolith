@@ -20,7 +20,9 @@ interface Post {
   contentUrl: string | null;
   createdAt: string;
   author: { id: string; username: string | null };
-  _count: { comments: number; likes: number };
+  _count: { comments: number; likes: number; skulls: number };
+  userHasLiked: boolean;
+  userHasSkulled: boolean;
 }
 
 export default function Home() {

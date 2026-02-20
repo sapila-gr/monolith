@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { LikeButton } from "./LikeButton";
+import { SkullButton } from "./SkullButton";
 import { CommentSection } from "./CommentSection";
 
 interface Post {
@@ -12,7 +13,9 @@ interface Post {
   contentUrl: string | null;
   createdAt: string;
   author: { id: string; username: string | null };
-  _count: { comments: number; likes: number };
+  _count: { comments: number; likes: number; skulls: number };
+  userHasLiked: boolean;
+  userHasSkulled: boolean;
 }
 
 interface PostCardProps {
@@ -86,6 +89,13 @@ export function PostCard({ post, isAuthenticated }: PostCardProps) {
           <LikeButton
             postId={post.id}
             initialCount={post._count.likes}
+            initialLiked={post.userHasLiked}
+            isAuthenticated={isAuthenticated}
+          />
+          <SkullButton
+            postId={post.id}
+            initialCount={post._count.skulls}
+            initialSkulled={post.userHasSkulled}
             isAuthenticated={isAuthenticated}
           />
           <CommentSection

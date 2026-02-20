@@ -25,6 +25,7 @@ model Post {
   authorId    String
   comments    Comment[]
   likes       Like[]
+  skulls      Skull[]
 }
 
 model Comment {
@@ -52,6 +53,17 @@ model Like {
   @@unique([postId, userId])
 }
 
+model Skull {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([postId, userId])
+}
+
 // Better Auth models
 
 model User {
@@ -68,6 +80,7 @@ model User {
   posts         Post[]
   comments      Comment[]
   likes         Like[]
+  skulls        Skull[]
 
   @@map("user")
 }

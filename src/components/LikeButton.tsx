@@ -5,12 +5,13 @@ import { useState } from "react";
 interface LikeButtonProps {
   postId: string;
   initialCount: number;
+  initialLiked: boolean;
   isAuthenticated: boolean;
 }
 
-export function LikeButton({ postId, initialCount, isAuthenticated }: LikeButtonProps) {
+export function LikeButton({ postId, initialCount, initialLiked, isAuthenticated }: LikeButtonProps) {
   const [count, setCount] = useState(initialCount);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(initialLiked);
   const [animating, setAnimating] = useState(false);
 
   const handleLike = async () => {
