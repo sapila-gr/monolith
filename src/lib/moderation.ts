@@ -1,8 +1,8 @@
-import vision from "@google-cloud/vision";
+import { ImageAnnotatorClient } from "@google-cloud/vision";
 import * as fs from "fs";
 import * as path from "path";
 
-let client: vision.ImageAnnotatorClient;
+let client: ImageAnnotatorClient;
 
 function initializeClient() {
   if (client) return client;
@@ -16,12 +16,12 @@ function initializeClient() {
     );
     const keyPath = path.join("/tmp", "gcp-key.json");
     fs.writeFileSync(keyPath, keyBuffer);
-    client = new vision.ImageAnnotatorClient({
+    client = new ImageAnnotatorClient({
       keyFilename: keyPath,
     });
   } else if (process.env.GOOGLE_CLOUD_KEY_FILE) {
     // Local dev: use file path
-    client = new vision.ImageAnnotatorClient({
+    client = new ImageAnnotatorClient({
       keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE,
     });
   } else {
