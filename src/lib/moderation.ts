@@ -39,8 +39,11 @@ export async function checkImageSafety(imageUrl: string) {
 
     // Likelihood: UNKNOWN, VERY_UNLIKELY, UNLIKELY, POSSIBLE, LIKELY, VERY_LIKELY
     const isBlocked =
+      detection?.adult === "POSSIBLE" ||
       detection?.adult === "LIKELY" ||
       detection?.adult === "VERY_LIKELY" ||
+      detection?.racy === "POSSIBLE" ||
+      detection?.racy === "LIKELY" ||
       detection?.racy === "VERY_LIKELY" ||
       detection?.violence === "LIKELY" ||
       detection?.violence === "VERY_LIKELY";

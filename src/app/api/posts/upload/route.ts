@@ -51,10 +51,12 @@ export async function POST(request: NextRequest) {
 
     const { data } = supabaseServer.storage.from("posts").getPublicUrl(filePath);
     const publicUrl = data.publicUrl;
+    console.log("File uploaded, checking with Vision API:", publicUrl);
 
     // Check image safety with Vision API
     const { safe, detection, error: visionError } =
       await checkImageSafety(publicUrl);
+    console.log("Vision API result:", { safe, detection, visionError });
 
     if (!safe) {
       // TODO: Delete the uploaded file if rejected
