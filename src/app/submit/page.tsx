@@ -6,7 +6,6 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { NavBar } from "@/components/NavBar";
-import { uploadImage } from "@/lib/storage";
 
 const CHAR_LIMIT = 500;
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -100,29 +99,43 @@ export default function SubmitPage() {
     setIsSubmitting(true);
 
     try {
-      let contentUrl: string | undefined;
+      if (postType === "text") {
+        // Text post: send to /api/posts
+        const response = await fetch("/api/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            caption,
+            textContent,
+            type: "text",
+          }),
+        });
 
-      if (postType === "image" && imageFile) {
-        contentUrl = await uploadImage(imageFile);
-      }
-
-      const body =
-        postType === "text"
-          ? { caption, textContent, type: "text" }
-          : { caption, type: "image", contentUrl };
-
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (response.ok) {
-        router.push("/");
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || "Something went wrong. Try again?");
+          return;
+        }
       } else {
-        setError("Something went wrong. Try again?");
+        // Image post: send to /api/posts/upload with FormData
+        const formData = new FormData();
+        formData.append("image", imageFile!);
+        formData.append("caption", caption);
+
+        const response = await fetch("/api/posts/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          setError(data.error || "Something went wrong. Try again?");
+          return;
+        }
       }
-    } catch {
+
+      router.push("/");
+    } catch (err) {
       setError("Network error. Check your connection.");
     } finally {
       setIsSubmitting(false);
