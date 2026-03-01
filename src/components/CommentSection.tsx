@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Comment {
   id: string;
@@ -14,8 +14,8 @@ interface Comment {
 
 interface CommentSectionProps {
   postId: string;
-  commentCount: number;
   isAuthenticated: boolean;
+  onCountChange: (updater: (c: number) => number) => void;
 }
 
 function timeAgo(dateStr: string) {
@@ -211,39 +211,26 @@ function CommentNode({
 
 export function CommentSection({
   postId,
-  commentCount,
   isAuthenticated,
+  onCountChange,
 }: CommentSectionProps) {
-  const [open, setOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [count, setCount] = useState(commentCount);
 
-  const loadComments = async () => {
-    if (comments.length > 0) {
-      setOpen(!open);
-      return;
-    }
-    setOpen(true);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/posts/${postId}/comments`);
-      const data = await res.json();
-      setComments(data);
-    } catch {
-      // silently fail
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetch(`/api/posts/${postId}/comments`)
+      .then((r) => r.json())
+      .then((data) => setComments(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [postId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || submitting) return;
     setSubmitting(true);
-
     try {
       const res = await fetch(`/api/posts/${postId}/comments`, {
         method: "POST",
@@ -254,7 +241,7 @@ export function CommentSection({
         const comment = await res.json();
         setComments((prev) => [...prev, comment]);
         setNewComment("");
-        setCount((c) => c + 1);
+        onCountChange((c) => c + 1);
       }
     } catch {
       // silently fail
@@ -264,81 +251,54 @@ export function CommentSection({
   };
 
   return (
-    <div>
-      <button
-        onClick={loadComments}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-surface-hover text-text-secondary border border-transparent hover:text-indigo hover:bg-indigo/10 transition-all"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path
-            d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span>{count}</span>
-      </button>
-
-      {open && (
-        <div className="mt-3 animate-fade-in">
-          <div className="border-t border-border pt-3 space-y-1">
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex gap-2">
-                    <div className="w-6 h-6 rounded-full animate-shimmer shrink-0" />
-                    <div className="flex-1 space-y-1">
-                      <div className="h-3 w-20 rounded animate-shimmer" />
-                      <div className="h-3 w-full rounded animate-shimmer" />
-                    </div>
-                  </div>
-                ))}
+    <div className="pt-3 space-y-1 animate-fade-in">
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2].map((i) => (
+            <div key={i} className="flex gap-2">
+              <div className="w-6 h-6 rounded-full animate-shimmer shrink-0" />
+              <div className="flex-1 space-y-1">
+                <div className="h-3 w-20 rounded animate-shimmer" />
+                <div className="h-3 w-full rounded animate-shimmer" />
               </div>
-            ) : comments.length === 0 ? (
-              <p className="text-sm text-text-tertiary text-center py-2">
-                No comments yet. Be the first!
-              </p>
-            ) : (
-              <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
-                {comments.map((comment) => (
-                  <CommentNode
-                    key={comment.id}
-                    comment={comment}
-                    postId={postId}
-                    depth={0}
-                    isAuthenticated={isAuthenticated}
-                    onReplyAdded={() => setCount((c) => c + 1)}
-                  />
-                ))}
-              </div>
-            )}
-
-            {isAuthenticated && (
-              <form onSubmit={handleSubmit} className="flex gap-2 pt-2">
-                <input
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Drop a comment..."
-                  className="flex-1 bg-surface-hover border border-border rounded-xl px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-indigo transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || submitting}
-                  className="px-3 py-2 rounded-xl bg-indigo text-white text-sm font-semibold disabled:opacity-40 hover:bg-indigo-dim transition-colors"
-                >
-                  {submitting ? "..." : "Send"}
-                </button>
-              </form>
-            )}
-          </div>
+            </div>
+          ))}
         </div>
+      ) : comments.length === 0 ? (
+        <p className="text-sm text-text-tertiary text-center py-2">
+          No comments yet. Be the first!
+        </p>
+      ) : (
+        <div className="space-y-1 max-h-[400px] overflow-y-auto pr-1">
+          {comments.map((comment) => (
+            <CommentNode
+              key={comment.id}
+              comment={comment}
+              postId={postId}
+              depth={0}
+              isAuthenticated={isAuthenticated}
+              onReplyAdded={() => onCountChange((c) => c + 1)}
+            />
+          ))}
+        </div>
+      )}
+
+      {isAuthenticated && (
+        <form onSubmit={handleSubmit} className="flex gap-2 pt-2">
+          <input
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            placeholder="Drop a comment..."
+            className="flex-1 bg-surface-hover border border-border rounded-xl px-3 py-2 text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-indigo transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={!newComment.trim() || submitting}
+            className="px-3 py-2 rounded-xl bg-indigo text-white text-sm font-semibold disabled:opacity-40 hover:bg-indigo-dim transition-colors"
+          >
+            {submitting ? "..." : "Send"}
+          </button>
+        </form>
       )}
     </div>
   );

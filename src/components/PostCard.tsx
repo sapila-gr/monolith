@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { LikeButton } from "./LikeButton";
 import { SkullButton } from "./SkullButton";
@@ -38,6 +39,9 @@ function timeAgo(dateStr: string) {
 }
 
 export function PostCard({ post, isAuthenticated }: PostCardProps) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentCount, setCommentCount] = useState(post._count.comments);
+
   return (
     <article className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-border-hover hover:shadow-[var(--shadow-card-hover)] transition-all duration-300">
       {/* Header */}
@@ -83,28 +87,45 @@ export function PostCard({ post, isAuthenticated }: PostCardProps) {
         )}
       </div>
 
-      {/* Actions */}
-      <div className="px-5 pb-4">
-        <div className="flex items-center gap-2">
-          <LikeButton
-            postId={post.id}
-            initialCount={post._count.likes}
-            initialLiked={post.userHasLiked}
-            isAuthenticated={isAuthenticated}
-          />
-          <SkullButton
-            postId={post.id}
-            initialCount={post._count.skulls}
-            initialSkulled={post.userHasSkulled}
-            isAuthenticated={isAuthenticated}
-          />
+      {/* Action row: Like, Skull, Comment button all inline */}
+      <div className="flex items-center gap-2 px-5 pb-4">
+        <LikeButton
+          postId={post.id}
+          initialCount={post._count.likes}
+          initialLiked={post.userHasLiked}
+          isAuthenticated={isAuthenticated}
+        />
+        <SkullButton
+          postId={post.id}
+          initialCount={post._count.skulls}
+          initialSkulled={post.userHasSkulled}
+          isAuthenticated={isAuthenticated}
+        />
+        <button
+          onClick={() => setCommentsOpen((o) => !o)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border border-transparent transition-all ${
+            commentsOpen
+              ? "bg-indigo/10 text-indigo"
+              : "bg-surface-hover text-text-secondary hover:text-indigo hover:bg-indigo/10"
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span>{commentCount}</span>
+        </button>
+      </div>
+
+      {/* Comments panel — separate full-width row below */}
+      {commentsOpen && (
+        <div className="border-t border-border px-5 pb-4">
           <CommentSection
             postId={post.id}
-            commentCount={post._count.comments}
             isAuthenticated={isAuthenticated}
+            onCountChange={setCommentCount}
           />
         </div>
-      </div>
+      )}
     </article>
   );
 }
